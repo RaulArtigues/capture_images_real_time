@@ -1,31 +1,28 @@
-# Usa una imagen base de Python ligera
 FROM python:3.10-slim
 
-# Establecer directorio de trabajo en el contenedor
-WORKDIR /app
-
-# Instalar dependencias del sistema necesarias
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Actualizar e instalar las herramientas necesarias
+RUN apt-get update && apt-get install -y \
     build-essential \
     llvm \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copiar requirements.txt al contenedor
-COPY requirements.txt /app/
+# Crear y activar un entorno virtual
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Instalar dependencias de Python
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir -r requirements.txt
+# Instalar wheel antes de las dependencias
+RUN pip install --upgrade pip wheel
 
-# Copiar el resto de la aplicación al contenedor
-COPY . /app/
+# Copiar los archivos del proyecto
+WORKDIR /app
+COPY . .
 
-# Exponer el puerto en el que Flask servirá la aplicación
+# Instalar las dependencias del proyecto
+RUN pip install -r requirements.txt
+
+# Exponer el puerto de la aplicación
 EXPOSE 5001
 
-# Establecer el comando para ejecutar la aplicación
+# Comando para iniciar la aplicación
 CMD ["python", "app.py"]
