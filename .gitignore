@@ -1,0 +1,8 @@
+# Ignorar todos los contenidos de la carpeta models
+models/
+
+# Ignorar todos los contenidos de la carpeta data/images
+data/images/
+
+# Ignorar todos los contenidos de la carpeta data/responses
+data/responses/

@@ -1,0 +1,81 @@
+/* Estilos generales */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #f3f4f6;  /* Fondo suave */
+    color: #333;
+}
+
+/* Estilos del encabezado */
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.logo {
+    width: 80px;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+h1 {
+    font-size: 24px;
+    color: #333;
+    font-weight: 600;
+}
+
+/* Estilos de la sección de captura */
+#capture-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Estilos del video */
+.video {
+    width: 100%;
+    max-width: 360px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos del botón de captura */
+.capture-button {
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #4CAF50;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.capture-button:hover {
+    background-color: #45a049;
+}
+
+/* Estilos de resultado */
+.resultado {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #e0f7fa;
+    border-radius: 8px;
+    max-width: 360px;
+    text-align: center;
+    font-size: 16px;
+    color: #00796b;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
