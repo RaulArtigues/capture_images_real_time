@@ -3,7 +3,6 @@ FROM python:3.10-slim
 # Actualizar e instalar las herramientas necesarias
 RUN apt-get update && apt-get install -y \
     build-essential \
-    llvm \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
