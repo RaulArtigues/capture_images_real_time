@@ -6,6 +6,7 @@ from src.modules.image_quality.response_handler import ResponseHandler
 from flask import Flask, request, jsonify, render_template
 import logging
 import time
+import os
 
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__, static_folder="src/static", template_folder="src/templates")
