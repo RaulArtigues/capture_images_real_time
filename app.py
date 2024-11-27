@@ -1,87 +1,81 @@
-from src.modules.image_quality.quality_evaluator import QualityEvaluator
-from src.modules.image_quality.image_processor import ImageProcessor
-from src.modules.image_quality.shaperness import SharpnessAnalyzer
-from src.modules.image_quality.exposure import ExposureAnalyzer
-from src.modules.image_quality.response_handler import ResponseHandler
-from flask import Flask, request, jsonify, render_template
-import logging
-import time
+from src.image_quality.managers.analyze_image_real_time import AnalyzeImageRealTime
+from src.image_quality.managers.analyze_image_gallery import AnalyzeImageGallery
+from flask import Flask, render_template
 import os
 
-logging.basicConfig(level=logging.INFO)
 app = Flask(__name__, static_folder="src/static", template_folder="src/templates")
-
+app.config['MAX_CONTENT_LENGTH'] = 20000 * 1024 * 1024
 @app.route("/")
 def index():
     return render_template("index.html")
 
-@app.route("/analyze_image", methods=["POST"])
-def analyze_image():
+@app.route("/analyze_image_real_time", methods=["POST"])
+def analyze_image_real_time():
     """
-    Procesa la imagen enviada en formato Base64, calcula la calidad utilizando varias métricas (NIQE, PIQA, BRISQUE)
-    y devuelve los resultados junto con las métricas básicas como nitidez, exposición y resolución.
+    Endpoint para analizar la imagen enviada al servidor.
+    Llama a la clase AnalyzeImageRealTime para procesar la imagen.
     """
-    start_time = time.time()
-    data = request.get_json()
-    image_base64 = data.get("image", "")
+    return AnalyzeImageRealTime.analyze_image_real_time()
 
-    if not image_base64:
-        return jsonify({"error": "La imagen en Base64 está vacía"}), 400
+@app.route("/analyze_image_gallery", methods=["POST"])
+def analyze_image_gallery():
+    """
+    Endpoint para analizar la imagen enviada al servidor.
+    Llama a la clase AnalyzeImageRealTime para procesar la imagen.
+    """
+    return AnalyzeImageGallery.analyze_image_gallery()
 
-    # Inicialización de evaluadores y procesadores
-    processor = ImageProcessor()
-    evaluator_niqe = QualityEvaluator("NIQE")
-    evaluator_piqa = QualityEvaluator("PIQA")
+from flask import Flask, request, jsonify
+from PIL import Image
+from PIL.ExifTags import TAGS
+import base64
+import io
 
+def extract_exif_data(image):
+    """
+    Extrae los metadatos EXIF de una imagen y los devuelve como un diccionario.
+    """
+    exif_data = image._getexif()
+    if not exif_data:
+        return {}
+
+    metadata = {}
+    for tag, value in exif_data.items():
+        decoded_tag = TAGS.get(tag, tag)
+        metadata[decoded_tag] = value
+
+    return metadata
+
+@app.route('/upload', methods=['POST'])
+def upload_image():
+    """
+    Endpoint para procesar imágenes redimensionadas y en Base64.
+    """
+    if 'image' not in request.files:
+        return jsonify({"error": "No se encontró el archivo de imagen"}), 400
+
+    # Leer la imagen redimensionada
+    file = request.files['image']
     try:
-        # Redimensionar y guardar la imagen
-        resized_image_base64, saved_path, resized_image, image_id, original_dims, resized_dims = processor.resize_and_save_image(image_base64, return_decoded=True)
-        if resized_image is None:
-            raise ValueError("Error al redimensionar o guardar la imagen.")
+        resized_image = Image.open(file)
+        resized_metadata = extract_exif_data(resized_image)
+
+        # Leer la imagen en Base64 (opcional)
+        base64_data = request.form.get('image_base64', None)
+        if base64_data:
+            decoded_image = Image.open(io.BytesIO(base64.b64decode(base64_data)))
+            base64_metadata = extract_exif_data(decoded_image)
+        else:
+            base64_metadata = {}
+
+        return jsonify({
+            "resized_metadata": resized_metadata,
+            "base64_metadata": base64_metadata,
+            "message": "Imágenes procesadas exitosamente."
+        })
     except Exception as e:
-        logging.error(f"Error durante el procesamiento de la imagen: {e}")
-        return jsonify({"error": "Error al procesar la imagen"}), 400
-
-    try:
-        # Análisis de métricas básicas
-        sharpness = SharpnessAnalyzer.analyze(resized_image)
-        exposure = ExposureAnalyzer.analyze(resized_image)
-
-        # Evaluación de calidad avanzada
-        niqe_results = evaluator_niqe.evaluate_image_quality(resized_image_base64)
-        piqa_results = evaluator_piqa.evaluate_image_quality(resized_image_base64)
-
-         # Medir el tiempo de procesamiento
-        elapsed_time_seconds = time.time() - start_time
-        elapsed_time_milliseconds = elapsed_time_seconds * 1000
-
-        # Consolidar resultados
-        results = {
-            "image_id": image_id,
-            "original_dimensions": {"width": original_dims[0], "height": original_dims[1]},
-            "resized_dimensions": {"width": resized_dims[0], "height": resized_dims[1]},
-            "sharpness": sharpness,
-            "exposure": exposure,
-            "niqe": niqe_results,
-            "piqa": piqa_results,
-            "saved_path": saved_path,
-            "processing_time_seconds": round(elapsed_time_seconds, 4),
-            "processing_time_milliseconds": round(elapsed_time_milliseconds, 2)
-        }
-
-        # Convertir a resultados serializables por JSON
-        native_results = processor.convert_to_native(results)
-
-        # Guardar en archivo JSON
-        handler = ResponseHandler()
-        handler.save_response(native_results)
-
-        return jsonify(native_results)
-
-    except Exception as e:
-        logging.error(f"Error durante el análisis de la imagen: {e}")
-        return jsonify({"error": "Error durante el análisis de la imagen"}), 500
-
+        return jsonify({"error": f"Error al procesar la imagen: {str(e)}"}), 500
+    
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5001))
     app.run(host="0.0.0.0", port=port, debug=True)

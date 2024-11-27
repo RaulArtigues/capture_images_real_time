@@ -3,82 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Captura de Imagen con Geolocalización</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background-color: #f3f4f6;
-            color: #333;
-        }
-
-        #capture-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-
-        #video {
-            width: 100%;
-            max-width: 360px;
-            border-radius: 8px;
-            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        #capture {
-            padding: 12px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            color: #fff;
-            background-color: #4CAF50;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        #capture:hover {
-            background-color: #45a049;
-        }
-
-        #resultado {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #e0f7fa;
-            border-radius: 8px;
-            max-width: 360px;
-            text-align: left;
-            font-size: 14px;
-            color: #00796b;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        img {
-            max-width: 360px;
-            margin-top: 20px;
-            border-radius: 8px;
-        }
-    </style>
+    <title>Análisis de Imágenes en Tiempo Real</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header>
-        <h1>Captura de Imagen con Geolocalización</h1>
-    </header>
+    <!-- Barra de navegación -->
+    <nav>
+        <a onclick="navigateTo('inicio-section')"><center>Inicio</center></a>
+        <a onclick="navigateTo('real-time-section')"><center>Tiempo Real</center></a>
+        <a onclick="navigateTo('gallery-section')"><center>Galería</center></a>
+    </nav>
 
-    <!-- Sección de captura de imagen -->
-    <div id="capture-section">
-        <video id="video" autoplay playsinline></video>
-        <button id="capture">Capturar Imagen</button>
-        <canvas id="canvas" style="display:none;"></canvas>
-        <div id="resultado"></div>
+    <!-- Contenido principal -->
+    <div class="container">
+        <!-- Sección de inicio -->
+        <section id="inicio-section">
+            <h1>Bienvenido al Análisis de la Calidad de Imágenes</h1>
+            <p>Seleccione una de las opciones:</p>
+            <button class="button" onclick="navigateTo('real-time-section')">Tomar Fotografía en Tiempo Real</button>
+            <button class="button" onclick="navigateTo('gallery-section')">Cargar Fotografía desde Galería</button>
+        </section>
+        <!-- Sección de tiempo real -->
+        <section id="real-time-section">
+            <h1>Análisis de la Calidad de Imagen en Tiempo Real</h1>
+            <p>Capture una fotografía y se procederá a analizar la calidad de la misma.</p>
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas" style="display: none;"></canvas>
+            <div style="text-align: center;">
+                <button id="capture" class="button">Capturar Imagen</button>
+                <div id="spinner-container" style="display: none; text-align: center; margin: 20px;">
+                    <div class="loader"></div>
+                    <span class="processing-text">Procesando...</span>
+                </div>
+                <div id="arrow">
+                    ↓ Resultados abajo ↓
+                </div>
+            </div>
+            <div id="resultado">
+                <p>Captura una imagen para visualizar los resultados.</p>
+            </div>
+            <div class="button-container">
+                <button id="clearButton" class="button" style="display: none;">Borrar Resultado</button>
+            </div>
+            <hr style="border: 0; height: 1px; background-image: linear-gradient(to right, red, blue);">
+            <button class="button" onclick="clearResults(); navigateTo('inicio-section')">Regresar al Inicio</button>
+        </section>
+
+        <!-- Sección de galería -->
+        <section id="gallery-section">
+            <h1>Galería de Análisis de Imágenes</h1>
+            <p>Seleccione una imagen desde su galería para analizar la calidad de la misma.</p>
+            <input type="file" id="galleryInput" accept="image/*">
+            <img id="gallery-image" style="display: none;" />
+        
+            <div class="button-container">
+                <button id="galleryAnalyzeButton" class="button" style="display: none;">Analizar</button>
+            </div>
+        
+            <div id="gallery-spinner-container">
+                <div class="loader"></div>
+                <span>Procesando...</span>
+            </div>
+        
+            <div id="arrow-gallery">↓ Resultados abajo ↓</div>
+            <div id="gallery-resultado">
+                <p>Carga una imagen para visualizar los resultados.</p>
+            </div>
+            <div class="button-container-gallery">
+                <button id="clearGalleryButton" class="button" style="display: none;">Borrar Resultado</button>
+            </div>
+            <hr style="border: 0; height: 1px; background-image: linear-gradient(to right, red, blue);">
+            <button class="button" onclick="clearResults(); navigateTo('inicio-section')">Regresar al Inicio</button>
+        </section>
     </div>
-    <div id="metadatos" style="white-space: pre-wrap; background: #f4f4f4; padding: 10px; border: 1px solid #ccc; margin: 10px;"></div>
+    <!-- Enlace al script para analizar imágenes en tiempo real -->
+    <script src="{{ url_for('static', filename='real_time_image.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <!-- Enlace al script para manejar imágenes desde la galería -->
+    <script src="{{ url_for('static', filename='image_gallery.js') }}"></script>
+    <script>
+        // Función para manejar la navegación entre secciones
+        function navigateTo(sectionId) {
+            const sections = document.querySelectorAll('section');
+            sections.forEach(section => section.style.display = 'none');
+            const targetSection = document.getElementById(sectionId);
+            targetSection.style.display = 'block';
+    
+            // Si es la sección de tiempo real, limpia los resultados anteriores
+            if (sectionId === 'real-time-section') {
+                clearResults();
+            }
+        }
+    
+        // Función para limpiar el contenido de #resultado
+        function clearResults() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<p>Captura una imagen para visualizar los resultados.</p>';
+            const spinner = document.getElementById('spinner');
+            const arrow = document.getElementById('arrow');
+    
+            // Asegurarse de que el spinner y la flecha estén ocultos al inicio
+            if (spinner) spinner.style.display = 'none';
+            if (arrow) arrow.style.display = 'none';
+        }
+    
+        // Función para mostrar el spinner y manejar el flujo de procesamiento
+        function handleCapture() {
+            const spinner = document.getElementById('spinner');
+            const arrow = document.getElementById('arrow');
+            const resultado = document.getElementById('resultado');
+    
+            // Mostrar spinner y ocultar flecha
+            spinner.style.display = 'block';
+            arrow.style.display = 'none';
+    
+            // Simular procesamiento (puedes reemplazar setTimeout con la lógica de procesamiento real)
+            setTimeout(() => {
+                spinner.style.display = 'none'; // Ocultar spinner
+                arrow.style.display = 'block'; // Mostrar flecha
+    
+                // Mostrar resultados procesados
+                resultado.innerHTML = '<p>¡Resultados procesados! Aquí se mostrarán los datos.</p>';
+            }, 3000); // Procesamiento simulado durante 3 segundos
+        }
+    
+        // Inicializar en la sección de inicio
+        navigateTo('inicio-section');
+    </script>
+    <footer>
+        <p>Copyright &copy; 2024 Raúl Artigues <br> Computer Vision Engineer</p>
+    </footer>
 </body>
 </html>
